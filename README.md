@@ -48,7 +48,7 @@ python pipeline.py
 At the end of your pre-survey, set the **End of Survey** element to redirect to:
 
 ```
-https://your-app-url.onrender.com/?pid=${e://Field/ResponseID}&topic=${e://Field/topic}&session=${e://Field/session_num}
+https://metacog-ai.onrender.com/?pid=${e://Field/ResponseID}&topic=${e://Field/topic}&session=${e://Field/session_num}
 ```
 
 In **Survey Flow**, add these Embedded Data fields before your first question block:
