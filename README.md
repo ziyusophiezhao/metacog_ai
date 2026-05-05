@@ -55,7 +55,7 @@ In **Survey Flow**, add these Embedded Data fields before your first question bl
 
 | Field | Value |
 |---|---|
-| `topic` | Set by randomizer (e.g. `conspiracies` or `info_seeking`) |
+| `topic` | Set by randomizer (e.g. `conspiracies` or `selective_exposure`) |
 | `session_num` | Set manually per wave (e.g. `1`, `2`, `3`) |
 
 **Survey Flow order:**
@@ -66,7 +66,7 @@ Set Embedded Data: topic (empty)
 ↓
 Randomizer (50/50)
   → Set Embedded Data: topic = conspiracies
-  → Set Embedded Data: topic = info_seeking
+  → Set Embedded Data: topic = selective_exposure
 ↓
 Block: Pre-survey questions
 ↓
@@ -127,7 +127,7 @@ This ensures demographics are collected once at baseline and skipped in later se
 Download all LLM conversation logs at:
 
 ```
-https://your-app-url.onrender.com/export?token=your-export-token
+https://metacog-ai.onrender.com/export?token=your-export-token
 ```
 
 Merge with Qualtrics exports using `pid` + `session_num` as the join key.
