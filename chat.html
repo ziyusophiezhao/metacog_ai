@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Metacognition Project</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    /* ── Chat container ───────────────────────────────────────────────── */
+    .container {
+      width: 100%;
+      max-width: 720px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    .header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .turn-counter {
+      font-size: 0.8rem;
+      color: #a0a0c0;
+    }
+
+    /* ── Message window ───────────────────────────────────────────────── */
+    #messages {
+      flex: 1;
+      height: 480px;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #fafafa;
+    }
+
+    .msg {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      word-wrap: break-word;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: #1a1a2e;
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg.assistant {
+      align-self: flex-start;
+      background: #efefef;
+      color: #1a1a1a;
+      border-bottom-left-radius: 2px;
+    }
+
+    .msg.system-note {
+      align-self: center;
+      background: transparent;
+      color: #888;
+      font-size: 0.78rem;
+      font-style: italic;
+      max-width: 100%;
+      text-align: center;
+      padding: 4px 0;
+    }
+
+    /* ── Typing indicator ─────────────────────────────────────────────── */
+    .typing {
+      align-self: flex-start;
+      background: #efefef;
+      border-radius: 10px;
+      border-bottom-left-radius: 2px;
+      padding: 10px 16px;
+      display: none;
+    }
+
+    .typing span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: #888;
+      border-radius: 50%;
+      margin: 0 2px;
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%            { transform: translateY(-6px); }
+    }
+
+    /* ── Input area ───────────────────────────────────────────────────── */
+    .input-area {
+      display: flex;
+      gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid #e8e8e8;
+      background: #fff;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+      min-height: 44px;
+      max-height: 120px;
+    }
+
+    #user-input:focus { border-color: #1a1a2e; }
+    #user-input:disabled { background: #f5f5f5; color: #aaa; }
+
+    #send-btn {
+      padding: 10px 20px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-end;
+    }
+
+    #send-btn:hover:not(:disabled) { background: #2e2e4e; }
+    #send-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+    /* ── Progress bar ─────────────────────────────────────────────────── */
+    .progress-wrap {
+      padding: 0 24px 14px;
+      background: #fff;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: #e8e8e8;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #1a1a2e;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* ── Completion overlay ───────────────────────────────────────────── */
+    #done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    #done-overlay.show { display: flex; }
+
+    .done-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 36px 40px;
+      text-align: center;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+
+    .done-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #1a1a2e;
+    }
+
+    .done-card p {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .done-card button {
+      padding: 12px 28px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .done-card button:hover { background: #2e2e4e; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>AI Metacognition Project</h1>
+    <span class="turn-counter" id="turn-display">0 / {{ max_turns }} exchanges</span>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages">
+    <div class="msg system-note">
+      Your conversation is private and will only be used for research purposes.
+      Please explore the topic freely — there are no right or wrong answers.
+    </div>
+  </div>
+
+  <!-- Typing indicator -->
+  <div class="typing" id="typing-indicator">
+    <span></span><span></span><span></span>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <textarea
+      id="user-input"
+      placeholder="Type your message and press Enter or click Send…"
+      rows="1"
+    ></textarea>
+    <button id="send-btn">Send</button>
+  </div>
+
+</div>
+
+<!-- Completion overlay -->
+<div id="done-overlay">
+  <div class="done-card">
+    <h2>Session complete</h2>
+    <p>Thank you for your responses. Please click below to continue to the next part of the study.</p>
+    <button id="continue-btn">Continue →</button>
+  </div>
+</div>
+
+<!-- ── Script ───────────────────────────────────────────────────────────── -->
+<script>
+  // ── Injected by Flask ──────────────────────────────────────────────────
+  const PID         = "{{ pid }}";
+  const TOPIC       = "{{ topic }}";
+  const SESSION_NUM = "{{ session_num }}";
+  const SESSION_ID  = "{{ session_id }}";
+  const MAX_TURNS   = {{ max_turns }};
+
+  // Qualtrics post-survey URL — Flask appends pid, session, complete on /complete
+  const RETURN_URL  = "/complete?pid=" + PID + "&session=" + SESSION_NUM;
+
+  // ── State ──────────────────────────────────────────────────────────────
+  let turnsUsed = 0;
+  let sessionDone = false;
+
+  // ── DOM refs ───────────────────────────────────────────────────────────
+  const messagesEl  = document.getElementById("messages");
+  const inputEl     = document.getElementById("user-input");
+  const sendBtn     = document.getElementById("send-btn");
+  const typingEl    = document.getElementById("typing-indicator");
+  const turnDisplay = document.getElementById("turn-display");
+  const progressEl  = document.getElementById("progress-fill");
+  const doneOverlay = document.getElementById("done-overlay");
+  const continueBtn = document.getElementById("continue-btn");
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  function appendMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function updateProgress() {
+    const pct = Math.min((turnsUsed / MAX_TURNS) * 100, 100);
+    progressEl.style.width = pct + "%";
+    turnDisplay.textContent = turnsUsed + " / " + MAX_TURNS + " exchanges";
+  }
+
+  function setLoading(loading) {
+    sendBtn.disabled  = loading || sessionDone;
+    inputEl.disabled  = loading || sessionDone;
+    typingEl.style.display = loading ? "block" : "none";
+    if (loading) messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function endSession() {
+    sessionDone = true;
+    sendBtn.disabled = true;
+    inputEl.disabled = true;
+    doneOverlay.classList.add("show");
+  }
+
+  // ── Send message ───────────────────────────────────────────────────────
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || sessionDone) return;
+
+    inputEl.value = "";
+    appendMessage("user", text);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message:     text,
+          session_id:  SESSION_ID,
+          pid:         PID,
+          topic:       TOPIC,
+          session_num: SESSION_NUM,
+        }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (data.error) {
+        appendMessage("system-note", "Something went wrong. Please try again.");
+        return;
+      }
+
+      if (data.reply) {
+        appendMessage("assistant", data.reply);
+        turnsUsed++;
+        updateProgress();
+      }
+
+      if (data.done) {
+        endSession();
+      }
+
+    } catch (err) {
+      setLoading(false);
+      appendMessage("system-note", "Connection error. Please check your internet and try again.");
+    }
+  }
+
+  // ── Event listeners ────────────────────────────────────────────────────
+
+  sendBtn.addEventListener("click", sendMessage);
+
+  // Enter to send, Shift+Enter for newline
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Auto-resize textarea
+  inputEl.addEventListener("input", () => {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+  });
+
+  // Continue button → redirect to Qualtrics post-survey via Flask /complete
+  continueBtn.addEventListener("click", () => {
+    window.location.href = RETURN_URL;
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────
+  updateProgress();
+</script>
+
+</body>
+</html>
