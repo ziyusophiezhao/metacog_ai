@@ -37,7 +37,7 @@ metacog_ai/
 |---|---|
 | Model | `gpt-4o-mini` |
 | Max turns per session | `5` |
-| Topic conditions | `conspiracies`, `info_seeking` |
+| Topic conditions | `political_conspiracies`, `selective_exposure` |
 | Study design | Longitudinal, 21 days |
 
 ---
