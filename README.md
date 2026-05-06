@@ -159,6 +159,14 @@ We also split the chronological sequence into three equal thirds (early, middle,
 
 Adapted from [CeciliaZhu1997/Chatbot-Experiment](https://github.com/CeciliaZhu1997/Chatbot-Experiment).
 
+Key Methodological References:
+
+Lydon-Staley, D.M., Zhou, D., Blevins, A.S. et al. Hunters, busybodies and the knowledge network building associated with deprivation curiosity. Nat Hum Behav 5, 327–336 (2021). https://doi.org/10.1038/s41562-020-00985-7
+
+Xue, H., Oh, Y.J., Zhou, X. et al. Users’ prompting strategies and ChatGPT’s contextual adaptation shape conversational information-seeking experiences. Sci Rep 16, 12112 (2026). https://doi.org/10.1038/s41598-026-42465-4
+
+
+
 ---
 
 ## License
