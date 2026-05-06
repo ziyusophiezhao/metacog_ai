@@ -137,7 +137,7 @@ gunicorn
 
 ## Knowledge Network Analysis (Prelim)
 
-```
+
 The code builds knowledge networks from human–LLM chat logs, following the general method of the reference paper (Hunters, busybodies and the knowledge network building associated with deprivation curiosity). For each participant:
 
 We define a node as one complete exchange: the user’s question + a separator + the assistant’s answer.
@@ -151,7 +151,7 @@ A directed traversal network consists only of consecutive pairs in the chronolog
 From these networks we extract the same metrics as the reference: average edge weight, weighted clustering coefficient, characteristic path length, small‑world propensity, modularity Q, and number of communities.
 
 We also split the chronological sequence into three equal thirds (early, middle, late) to perform within‑person time‑varying analyses (ICC and repeated‑measures correlations with metacognitive/confidence scores).
-```
+
 
 ---
 
