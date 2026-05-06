@@ -1,6 +1,6 @@
 # AI Metacognition Project
 
-A longitudinal experiment platform that connects a Qualtrics survey to an OpenAI LLM session and back to Qualtrics for post-session measures.
+A longitudinal 21-day experiment platform that embeds an OpenAI LLM conversation inside a Qualtrics survey. This repository documents the pipeline for a single-day session — repeated across 21 days.
 
 ---
 
@@ -8,10 +8,12 @@ A longitudinal experiment platform that connects a Qualtrics survey to an OpenAI
 
 ```
 Qualtrics Pre-survey
-  ↓  redirect with pid + topic + session_num
-Flask App (pipeline.py) — OpenAI LLM session
-  ↓  redirect with pid + session_num
-Qualtrics Post-survey
+  ↓  pid + topic + session_num passed via embedded data
+Embedded LLM Chat (JavaScript inside Qualtrics block)
+  ↓  calls https://metacog-ai.onrender.com/chat
+Flask App (pipeline.py) — OpenAI API
+  ↓  logs transcript to SQLite
+Post-survey measures continue in same Qualtrics session
 ```
 
 ---
@@ -29,102 +31,90 @@ metacog_ai/
 
 ---
 
-## Setup
+## Current Configuration
 
-```bash
-git clone https://github.com/your-lab/metacog_ai.git
-cd metacog_ai
-pip install -r requirements.txt
-export OPENAI_API_KEY="sk-your-key-here"
-python pipeline.py
-```
-
----
-
-## Qualtrics Implementation
-
-### Step 1 — Pre-survey: redirect to the LLM app
-
-At the end of your pre-survey, set the **End of Survey** element to redirect to:
-
-```
-https://metacog-ai.onrender.com/?pid=${e://Field/ResponseID}&topic=${e://Field/topic}&session=${e://Field/session_num}
-```
-
-In **Survey Flow**, add these Embedded Data fields before your first question block:
-
-| Field | Value |
+| Setting | Value |
 |---|---|
-| `topic` | Set by randomizer (e.g. `conspiracies` or `selective_exposure`) |
-| `session_num` | Set manually per wave (e.g. `1`, `2`, `3`) |
-
-**Survey Flow order:**
-
-```
-Set Embedded Data: session_num = 1
-Set Embedded Data: topic (empty)
-↓
-Randomizer (50/50)
-  → Set Embedded Data: topic = conspiracies
-  → Set Embedded Data: topic = selective_exposure
-↓
-Block: Pre-survey questions
-↓
-End of Survey → Redirect to app URL above
-```
+| Model | `gpt-4o-mini` |
+| Max turns per session | `5` |
+| Topic conditions | `conspiracies`, `info_seeking` |
+| Study design | Longitudinal, 21 days |
 
 ---
 
-### Step 2 — LLM session (pipeline.py)
+## Topic Conditions
 
-The app receives `pid`, `topic`, and `session_num` from the URL, runs the LLM conversation for up to 15 turns, then automatically redirects the participant to the post-survey.
+Participants are randomly assigned to one of two topic conditions at the start of Day 1 and remain in that condition for all 21 days:
 
-No Qualtrics configuration needed here — this is handled by `pipeline.py`.
-
----
-
-### Step 3 — Post-survey: capture returning participant
-
-In your post-survey **Survey Flow**, add these Embedded Data fields at the very top, set from URL parameters:
-
-| Field | Source |
+| Condition | Topic |
 |---|---|
-| `pid` | URL parameter `pid` |
-| `session_num` | URL parameter `session_num` |
-| `topic` | URL parameter `topic` |
-| `complete` | URL parameter `complete` |
-
-Qualtrics captures these automatically when the participant lands on the post-survey URL.
-
-Use `pid` + `session_num` to merge post-survey responses with pre-survey responses and LLM conversation logs.
+| `political_conspiracies` | controversial |
+| `selective_exposure` | non-controversial |
 
 ---
 
-### Step 4 — Demographics (session 1 only)
+## Qualtrics Survey Flow (Single-Day Example)
 
-In the post-survey, add a **Branch** at the end of the survey flow:
+This is the structure for one daily session. The same survey is distributed on each of the 21 days, with `session_num` updated each wave.
 
 ```
+Set Embedded Data
+  session_num = 1  ← increment each wave (1–21)
+  topic = (empty, set by randomizer)
+↓
+Randomizer (50/50, evenly distributed)
+  ├── topic = political_conspiracies
+  └── topic = selective_exposure
+↓
+ID/Student No.
+Consent form
+↓
 Branch: IF session_num = 1
-  → Show Block: Demographics
+  └── Demographic block
+Branch: IF topic = conspiracies
+  └── Topic_Political_Conspiracy block
+Branch: IF topic = info_seeking
+  └── Topic_Selective_Exposure block
+↓
+Metacognition Questionnaire (MCQ-30; Wells & Cartwright-Hatton, 2004)
+↓
+LLM_Chatbot block — Session  (5 exchanges)
+↓
+Metacognitive Experience_1 (Shulman & Sweitzer, 2018)
+↓
+Confidence_Scale_1
+↓
+End of Survey
 ```
-
-This ensures demographics are collected once at baseline and skipped in later sessions.
-
 ---
 
 ## Deployment
 
-1. Push repo to GitHub as `metacog_ai`
-2. Create a Web Service on [Render.com](https://render.com)
-3. Set environment variables: `OPENAI_API_KEY`, `EXPORT_TOKEN`
-4. Start command: `gunicorn pipeline:app`
+App is deployed on [Render.com](https://render.com):
+
+```
+https://metacog-ai.onrender.com
+```
+
+Environment variables set on Render:
+
+| Variable | Description |
+|---|---|
+| `OPENAI_API_KEY` | OpenAI API key |
+| `EXPORT_TOKEN` | Secret token to protect /export endpoint |
+
+Start command:
+```
+gunicorn pipeline:app
+```
+
+> **Note:** Render's free tier spins down after inactivity. The first request after a period of inactivity may take 30–50 seconds. Consider upgrading for live data collection.
 
 ---
 
 ## Data Export
 
-Download all LLM conversation logs at:
+Download all LLM conversation logs as CSV:
 
 ```
 https://metacog-ai.onrender.com/export?token=your-export-token
@@ -139,6 +129,7 @@ Merge with Qualtrics exports using `pid` + `session_num` as the join key.
 ```
 openai
 flask
+flask-cors
 gunicorn
 ```
 
@@ -147,7 +138,6 @@ gunicorn
 ## Credits
 
 Adapted from [CeciliaZhu1997/Chatbot-Experiment](https://github.com/CeciliaZhu1997/Chatbot-Experiment).
-Longitudinal design based on Lydon-Staley et al. (2021), *Nature Human Behaviour*.
 
 ---
 
