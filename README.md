@@ -76,6 +76,8 @@ Branch: IF topic = conspiracies
 Branch: IF topic = info_seeking
   └── Topic_Selective_Exposure block
 ↓
+Measures of perceived AI response quality and interaction quality
+↓
 Metacognition Questionnaire (MCQ-30; Wells & Cartwright-Hatton, 2004)
 ↓
 LLM_Chatbot block — Session  (5 exchanges)
