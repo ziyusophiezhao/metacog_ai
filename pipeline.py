@@ -29,7 +29,7 @@ CORS(app)  # Allow Qualtrics (cross-origin) to call /chat
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 MODEL     = "gpt-4o-mini"           # OpenAI model
-MAX_TURNS = 15                       # Max user turns per session (~10–15 min)
+MAX_TURNS = 5                       # Max user turns per session (~10 min)
 DB_PATH   = "metacog_sessions.db"   # SQLite database file
 
 # Qualtrics post-survey URL — pid and session_num appended on redirect
