@@ -1,4 +1,8 @@
-openai
 flask
 flask-cors
+openai
+psycopg2-binary
 gunicorn
+
+# Deployment start command for Render.com:
+# gunicorn pipeline:app
