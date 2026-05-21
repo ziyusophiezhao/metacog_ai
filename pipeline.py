@@ -3,22 +3,23 @@
 # =============================================================================
 # Flask backend for the longitudinal LLM conversation pipeline.
 # Receives participants from Qualtrics pre-survey, serves a topic-locked
-# OpenAI LLM session, logs transcripts to SQLite, and redirects back to
+# OpenAI LLM session, logs transcripts to PostgreSQL, and redirects back to
 # Qualtrics post-survey.
 #
 # Adapted from: CeciliaZhu1997/Chatbot-Experiment
 #   github.com/CeciliaZhu1997/Chatbot-Experiment
 # Study design: Lydon-Staley et al. (2021), Nature Human Behaviour
+#
+# Modified: SQLite replaced with PostgreSQL for persistent storage on Render
 # =============================================================================
 
 import os
-import sqlite3
 import csv
 import io
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_file, redirect, abort
 from flask_cors import CORS
-
+import psycopg2
 from openai import OpenAI
 
 app = Flask(__name__)
@@ -28,20 +29,12 @@ CORS(app)  # Allow Qualtrics (cross-origin) to call /chat
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-MODEL     = "gpt-4o-mini"           # OpenAI model
-MAX_TURNS = 5                       # Max user turns per session (~10 min)
-DB_PATH   = "metacog_sessions.db"   # SQLite database file
-
-# Qualtrics post-survey URL — pid and session_num appended on redirect
+MODEL     = "gpt-4o-mini"
+MAX_TURNS = 5
 RETURN_URL = "https://ucdavis.co1.qualtrics.com/jfe/form/SV_71mW9DfPrudBg0K"
-
-# Protects the /export endpoint — set via environment variable on Render
 EXPORT_TOKEN = os.environ.get("EXPORT_TOKEN", "change-me-before-launch")
 
 # ── System prompts ────────────────────────────────────────────────────────────
-# Topic-locked per Lydon-Staley et al. (2021) design.
-# The LLM stays within the assigned domain across all turns, encouraging
-# iterative, gap-filling conversation that builds a tight knowledge network.
 
 SYSTEM_PROMPTS = {
     "conspiracies": (
@@ -85,13 +78,25 @@ SYSTEM_PROMPTS = {
 
 VALID_TOPICS = set(SYSTEM_PROMPTS.keys())
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# ── Database — PostgreSQL ─────────────────────────────────────────────────────
+# Reads DATABASE_URL from environment variable set on Render.
+# Render provides 'postgres://' — psycopg2 requires 'postgresql://'
+
+def get_conn():
+    """Open a new PostgreSQL connection."""
+    url = os.environ.get("DATABASE_URL", "")
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return psycopg2.connect(url)
+
 
 def init_db():
-    con = sqlite3.connect(DB_PATH)
-    con.execute("""
+    """Create tables if they do not exist. Called once on startup."""
+    con = get_conn()
+    cur = con.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS messages (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            id          SERIAL PRIMARY KEY,
             session_id  TEXT    NOT NULL,
             pid         TEXT,
             topic       TEXT,
@@ -103,53 +108,55 @@ def init_db():
         )
     """)
     con.commit()
+    cur.close()
     con.close()
 
 
 def save_message(session_id, pid, topic, session_num, role, content, turn):
-    con = sqlite3.connect(DB_PATH)
-    con.execute(
+    con = get_conn()
+    cur = con.cursor()
+    cur.execute(
         """INSERT INTO messages
            (session_id, pid, topic, session_num, role, content, turn, timestamp)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
         (session_id, pid, topic, session_num, role, content, turn,
          datetime.utcnow().isoformat())
     )
     con.commit()
+    cur.close()
     con.close()
 
 
 def get_history(session_id):
-    con = sqlite3.connect(DB_PATH)
-    rows = con.execute(
-        "SELECT role, content FROM messages WHERE session_id=? ORDER BY id",
+    con = get_conn()
+    cur = con.cursor()
+    cur.execute(
+        "SELECT role, content FROM messages WHERE session_id=%s ORDER BY id",
         (session_id,)
-    ).fetchall()
+    )
+    rows = cur.fetchall()
+    cur.close()
     con.close()
     return [{"role": r, "content": c} for r, c in rows]
 
 
 def count_turns(session_id):
-    con = sqlite3.connect(DB_PATH)
-    n = con.execute(
-        "SELECT COUNT(*) FROM messages WHERE session_id=? AND role='user'",
+    con = get_conn()
+    cur = con.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM messages WHERE session_id=%s AND role='user'",
         (session_id,)
-    ).fetchone()[0]
+    )
+    n = cur.fetchone()[0]
+    cur.close()
     con.close()
     return n
+
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
-    """
-    Entry point — receives participants redirected from Qualtrics pre-survey.
-
-    Expected URL parameters:
-        pid         Qualtrics ResponseID
-        topic       'conspiracies' or 'info_seeking'
-        session     Session number (1, 2, 3 ...)
-    """
     pid         = request.args.get("pid", "unknown")
     topic       = request.args.get("topic", "").strip().lower()
     session_num = request.args.get("session", "1")
@@ -162,7 +169,6 @@ def index():
     except ValueError:
         abort(400, "Session number must be an integer.")
 
-    # Unique session ID links this participant + session across the database
     session_id = f"{pid}_s{session_num}"
 
     return render_template(
@@ -177,12 +183,6 @@ def index():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    """
-    Receives a user message, calls OpenAI, logs both turns, returns the reply.
-
-    Expected JSON body:
-        pid, topic, session_num, session_id, message
-    """
     data        = request.json
     user_msg    = data.get("message", "").strip()
     session_id  = data.get("session_id")
@@ -199,14 +199,11 @@ def chat():
     if turns >= MAX_TURNS:
         return jsonify({"reply": None, "done": True, "turns_left": 0})
 
-    # Log user message
     save_message(session_id, pid, topic, session_num, "user", user_msg, turns + 1)
 
-    # Build full message history for OpenAI
     history  = get_history(session_id)
     messages = [{"role": "system", "content": SYSTEM_PROMPTS[topic]}] + history
 
-    # Call OpenAI
     response = client.chat.completions.create(
         model=MODEL,
         messages=messages,
@@ -215,7 +212,6 @@ def chat():
     )
     reply = response.choices[0].message.content.strip()
 
-    # Log assistant reply
     save_message(session_id, pid, topic, session_num, "assistant", reply, turns + 1)
 
     done = (turns + 1) >= MAX_TURNS
@@ -228,20 +224,18 @@ def chat():
 
 @app.route("/export")
 def export():
-    """
-    Download all conversation logs as CSV.
-    Protected by EXPORT_TOKEN environment variable.
-    Access: /export?token=your-secret-token
-    """
     if request.args.get("token", "") != EXPORT_TOKEN:
         abort(403, "Invalid or missing export token.")
 
-    con = sqlite3.connect(DB_PATH)
-    rows = con.execute(
+    con = get_conn()
+    cur = con.cursor()
+    cur.execute(
         """SELECT session_id, pid, topic, session_num,
                   role, content, turn, timestamp
            FROM messages ORDER BY session_id, id"""
-    ).fetchall()
+    )
+    rows = cur.fetchall()
+    cur.close()
     con.close()
 
     output = io.StringIO()
@@ -264,4 +258,4 @@ def export():
 init_db()
 
 if __name__ == "__main__":
-    app.run(debug=True)  # Set debug=False before deploying to production
+    app.run(debug=True)
