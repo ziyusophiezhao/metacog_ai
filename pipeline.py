@@ -85,9 +85,14 @@ VALID_TOPICS = set(SYSTEM_PROMPTS.keys())
 def get_conn():
     """Open a new PostgreSQL connection."""
     url = os.environ.get("DATABASE_URL", "")
+    if not url:
+        raise RuntimeError("DATABASE_URL is not set")
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
-    return psycopg2.connect(url)
+    try:
+        return psycopg2.connect(url)
+    except Exception as e:
+        raise RuntimeError(f"Database connection failed: {e}")
 
 
 def init_db():
