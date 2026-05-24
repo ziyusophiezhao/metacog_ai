@@ -77,7 +77,6 @@ SYSTEM_PROMPTS = {
         "about what they already know and what they want to understand better.\n"
         "- End each response with one focused follow-up question.\n"
         "- Keep responses to 2 sentences. Plain, conversational language."
-),
     ),
 }
 
