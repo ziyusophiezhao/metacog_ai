@@ -256,7 +256,10 @@ def export():
         as_attachment=True,
         download_name="metacog_sessions_export.csv"
     )
-
+    
+@app.route("/ping")
+def ping():
+    return "pong", 200
 
 # ── Init & run ────────────────────────────────────────────────────────────────
 
