@@ -61,7 +61,9 @@ SYSTEM_PROMPTS = {
         "- Turn 2: Explore the main mechanism or cause\n"
         "- Turn 3: Connect to a real-world example or implication\n"
         "- Turn 4: Address a common misconception or deepen understanding\n"
-        "- Turn 5: Synthesize what was discussed and end with a reflective closing question\n"
+        "- Turn 5: Do NOT ask a question. Instead, provide a warm, synthesizing conclusion "
+        "that summarizes the key ideas covered and affirms what the participant has learned. "
+        "End with a closing statement, not a question.\n"
         "Never repeat information already covered. Build progressively across turns."
     ),
     "info_seeking": (
@@ -91,7 +93,9 @@ SYSTEM_PROMPTS = {
         "- Turn 2: Explore the main mechanism or cause\n"
         "- Turn 3: Connect to a real-world example or implication\n"
         "- Turn 4: Address a common misconception or deepen understanding\n"
-        "- Turn 5: Synthesize what was discussed and end with a reflective closing question\n"
+        "- Turn 5: Do NOT ask a question. Instead, provide a warm, synthesizing conclusion "
+        "that summarizes the key ideas covered and affirms what the participant has learned. "
+        "End with a closing statement, not a question.\n"
         "Never repeat information already covered. Build progressively across turns."
     ),
 }
