@@ -183,6 +183,11 @@ def count_turns(session_id):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+@app.route("/debug", methods=["POST"])
+def debug():
+    data = request.json
+    print(f"[DEBUG RECEIVED] {data}")
+    return jsonify({"received": data}), 200
 
 @app.route("/")
 def index():
