@@ -45,7 +45,7 @@ metacog_ai/
 |---|---|
 | Model | `gpt-4o-mini` |
 | Max turns per session | `5` |
-| Topic conditions | `poli_conspiracy`, `info_seeking` |
+| Topic conditions | `poli_conspiracy`, `selective_exposure` |
 | Study design | Longitudinal, 21 days |
 | Baseline survey | `SV_71mW9DfPrudBg0K` |
 | Daily follow-up survey | `SV_cNfsfrFP8ofRc6W` |
@@ -57,10 +57,10 @@ metacog_ai/
 Participants are randomly assigned to one of two topic conditions at the
 baseline survey (Day 1) and remain in that condition for all 21 daily sessions:
 
-| Condition | Topic | Description |
+| Condition | Topic |
 |---|---|---|
-| `poli_conspiracy` | Political Conspiracies | Controversial — COVID-19 conspiracy beliefs, misinformation, epistemic trust (Pew Research Center, 2020) |
-| `info_seeking` | Psychological Aspects of Information Seeking | Non-controversial — curiosity, knowledge networks, learning behavior (Lydon-Staley et al., 2021) |
+| `poli_conspiracy` | Political Conspiracies |
+| `selective_exposure` | Selective Exposure |
 
 ---
 
@@ -75,7 +75,7 @@ Set Embedded Data
 ↓
 Randomizer (50/50, evenly distributed)
   ├── topic = poli_conspiracy
-  └── topic = info_seeking
+  └── topic = selective_exposure
 ↓
 ID/Student No.
 Consent form
@@ -85,8 +85,8 @@ MCQ-30 (Wells & Cartwright-Hatton, 2004)
 ↓
 Branch: IF topic = poli_conspiracy
   └── Topic intro: poli_conspiracy
-Branch: IF topic = info_seeking
-  └── Topic intro: info_seeking
+Branch: IF topic = selective_exposure
+  └── Topic intro: selective_exposure
 ↓
 Metacognitive Experience (Shulman & Sweitzer, 2018a, 2018b)
 ↓
@@ -106,9 +106,9 @@ Set Embedded Data
 Branch: IF topic = poli_conspiracy
   └── Topic intro: poli_conspiracy
   └── LLM_Chatbot (5 exchanges, topic = poli_conspiracy)
-Branch: IF topic = info_seeking
-  └── Topic intro: info_seeking
-  └── LLM_Chatbot (5 exchanges, topic = info_seeking)
+Branch: IF topic = selective_exposure
+  └── Topic intro: selective_exposure
+  └── LLM_Chatbot (5 exchanges, topic = selective_exposure)
 ↓
 Metacognitive Experience (Shulman & Sweitzer, 2018a, 2018b)
 ↓
@@ -127,7 +127,7 @@ daily for 20 subsequent days via Qualtrics email distribution.
 ### How topic condition carries forward
 
 At the end of the baseline survey, each participant's assigned `topic`
-value (`poli_conspiracy` or `info_seeking`) is saved in their Qualtrics
+value (`poli_conspiracy` or `selective_exposure`) is saved in their Qualtrics
 response record. Before distributing the daily follow-up survey, export
 the baseline response data and create a **Qualtrics Contact List** with
 two columns:
@@ -135,7 +135,7 @@ two columns:
 | Column | Value |
 |---|---|
 | `Email` | Participant email address |
-| `topic` | Their assigned condition from baseline (`poli_conspiracy` or `info_seeking`) |
+| `topic` | Their assigned condition from baseline (`poli_conspiracy` or `selective_exposure`) |
 
 Upload this contact list to Qualtrics under **Contacts → Create Contact List**.
 When you distribute the daily follow-up survey using this contact list,
@@ -198,7 +198,7 @@ To encourage completion across all 21 days:
 ### Daily follow-up survey
 | Field | Value |
 |---|---|
-| `session_num` | Set manually per wave (`1` through `21`) |
+| `session_num` | Set manually per wave (`2` through `21`) |
 | `topic` | Passed from baseline via Qualtrics contact list or URL parameter |
 
 ---
@@ -227,7 +227,7 @@ var topic = Qualtrics.SurveyEngine.getEmbeddedData('topic') || "${e://Field/topi
 > this conspiracy theory — what people believe, why they believe it, and what
 > the evidence says. You must complete all 5 exchanges before moving on.
 
-**Condition: info_seeking**
+**Condition: selective_exposure**
 > A classmate mentioned they always seem to know a little about everything,
 > while you tend to go deep on a few topics you care about. You started
 > wondering why people seek information so differently. Talk with the AI to
