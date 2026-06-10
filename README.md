@@ -100,7 +100,7 @@ End of Survey
 
 ```
 Set Embedded Data
-  session_num = 1  ← increment each wave (2–21)
+  session_num = 2  ← increment each wave (2–21)
   topic = (empty, carried from baseline via participant panel)
 ↓
 Branch: IF topic = poli_conspiracy
