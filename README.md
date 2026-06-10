@@ -228,13 +228,7 @@ var topic = Qualtrics.SurveyEngine.getEmbeddedData('topic') || "${e://Field/topi
 > the evidence says. You must complete all 5 exchanges before moving on.
 
 **Condition: selective_exposure**
-> A classmate mentioned they always seem to know a little about everything,
-> while you tend to go deep on a few topics you care about. You started
-> wondering why people seek information so differently. Talk with the AI to
-> learn more about the psychology of information seeking — why people are
-> curious, how they explore topics, and how they build knowledge over time.
-> You must complete all 5 exchanges before moving on.
-
+> You've been spending a lot of time on social media and a friend recently told you that you seem to only see content from people who already agree with you. You're not sure what to think. Your task is to talk with the AI to learn more about echo chambers and selective exposure, what they are, why they happen, and what research says about their effects. Your goal is to feel more informed about how the information environment might be shaping the way people think.
 ---
 
 ## Deployment
