@@ -9,7 +9,7 @@ topic-locked LLM conversation and metacognitive outcome measures.
 
 ## Measurement Scales
 
-Three instruments are used: one administered once at baseline, two repeated after each daily LLM session. The baseline measure captures stable individual differences in how people think about thinking, while the daily measures track how those experiences shift over the course of the study.
+Three instruments are used: one was shown once at baseline, and two were repeated after each daily LLM session. The baseline measure captures stable individual differences in how people think about thinking, while the daily measures track how those experiences shift over the course of the study.
 
 | Scale | Type | When | Source |
 |---|---|---|---|
@@ -19,7 +19,7 @@ Three instruments are used: one administered once at baseline, two repeated afte
 
 **MCQ-30** measures stable beliefs about thinking and worrying across five subscales (positive beliefs about worry, uncontrollability and danger, cognitive confidence, need to control thoughts, cognitive self-consciousness). Given once at baseline to account for individual differences. Subscales like cognitive confidence and cognitive self-consciousness are particularly relevant here, since they speak to how people monitor and evaluate their own understanding, which is likely to interact with how they engage with LLM-generated information over time.
 
-**Processing Fluency** (3 items) asks how smoothly participants felt they processed the LLM's responses. Administered after each chat session, it serves as the primary within-person metacognition measure across the 21 days. Items:
+**Processing Fluency** (3 items) asks how smoothly participants felt they processed the LLM's responses. Measured after each chat session, it serves as the primary within-person metacognition measure across the 21 days. Items:
 
 1. Overall, I felt that the language used in these questions was difficult. *(reverse-coded)*
 2. The information presented in these questions felt new to me. *(reverse-coded)*
